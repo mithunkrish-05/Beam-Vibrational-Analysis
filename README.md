@@ -108,7 +108,7 @@ The script will:
 * Process each trial, apply filter & crop, compute zero‑crossing frequency & Young’s Modulus.
 * **Save** and/or **display** filtered & cropped plots.
 * Print results to terminal.
-* Optionally generate `ruler_analysis.xlsx` in your output folder.
+* Optionally generate `beam_analysis.xlsx` in your output folder.
 
 ---
 

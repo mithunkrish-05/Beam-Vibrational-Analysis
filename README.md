@@ -63,7 +63,7 @@ Follow these steps to record and prepare your vibration data CSVs:
 ## Installation
 
 ```bash
-git clone https://github.com/<your-username>/ruler-vibration-analysis.git
+git clone https://github.com/mithunkrish-05/Beam-Vibrational-Analysis.git
 cd ruler-vibration-analysis
 ```
 

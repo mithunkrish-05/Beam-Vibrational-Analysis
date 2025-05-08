@@ -64,7 +64,7 @@ Follow these steps to record and prepare your vibration data CSVs:
 
 ```bash
 git clone https://github.com/mithunkrish-05/Beam-Vibrational-Analysis.git
-cd ruler-vibration-analysis
+cd Beam-Vibrational-Analysis
 ```
 
 *Optional venv:*
@@ -84,7 +84,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python ruler_analysis.py
+python Vibrational_Analysis.py
 ```
 
 You will be prompted for:

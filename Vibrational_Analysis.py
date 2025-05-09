@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Beam Vibration Processor
 Author: mithunkrish-05

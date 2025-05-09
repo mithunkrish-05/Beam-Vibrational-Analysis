@@ -5,7 +5,7 @@ Interactive script for filtering, analyzing, plotting and exporting
 frequency & Young's Modulus results from CSV trial data.
 """
 
-# —— Auto-install any missing external packages ——
+#Installing and Importing Libraries
 import sys
 import subprocess
 
@@ -18,8 +18,7 @@ def ensure(pkg):
 
 for pkg in ("numpy", "pandas", "matplotlib", "scipy", "openpyxl"):
     ensure(pkg)
-
-# —— Now the real imports ——  
+    
 import os
 import glob
 import numpy as np
@@ -29,35 +28,35 @@ from scipy.signal import butter, filtfilt
 import openpyxl
 from pathlib import Path
 
-# ---- Helper functions ----
+#Read
 def read_csv(file_path):
     df = pd.read_csv(file_path)
     time = df.iloc[:,1].values
     qlvl = df.iloc[:,0].values
     return time, qlvl
-
+#Filter
 def low_pass(data, cutoff=70, fs=5000, order=4):
     nyq = 0.5 * fs
     b,a = butter(order, cutoff/nyq, btype='low', analog=False)
     return filtfilt(b, a, data)
-
+#Crop
 def crop_signal(time, data, frac=0.1):
     amp = np.abs(data)
     thresh = frac * amp.max()
     idx = np.where(amp > thresh)[0]
     return time[idx[0]:idx[-1]+1], data[idx[0]:idx[-1]+1]
-
+#Crossings
 def find_crossings(time, data):
     xs = []
     for i in range(1,len(data)):
         if data[i-1]*data[i]<0:
             xs.append(time[i])
     return xs
-
+#Frequency
 def calc_frequency(n_cross, t_period):
     cycles = (n_cross-1)/2 if n_cross>1 else 0
     return cycles/t_period if t_period>0 else 0
-
+#Young's Modulus
 def calc_youngs_modulus(f, b, h, rho, I, L):
     q = rho*b*h
     E = ((f/0.56)**2 * q * L**4)/I
@@ -74,7 +73,7 @@ def prompt(prompt_txt, default=None, cast=str):
         except:
             print(" ↳ invalid input, try again")
 
-# ---- Main workflow ----
+#User Input
 def main():
     # User settings
     inp_dir   = Path(prompt("Input folder containing CSVs", "data", Path))
@@ -100,7 +99,7 @@ def main():
     lengths = [int(x) for x in lengths.split(",")]
     I_moment = lambda b,h: (b*h**3)/12
 
-    # Prepare Excel workbook
+    #Excel workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.append(["Length(mm)", "Trial", "Frequency(Hz)", "Young's Modulus(GPa)"])
@@ -114,13 +113,13 @@ def main():
                 print(f" ⚠️  Missing file: {fname}")
                 continue
 
-            # Read & preprocess
+            #Read & preprocess
             time, qlvl = read_csv(fname)
             centered    = qlvl - qlvl.mean()
             filt        = low_pass(centered, cutoff, fs, order)
             ctime, cdata = crop_signal(time, filt, frac)
 
-            # Compute freq & E
+            #Compute freq & E
             crossings = find_crossings(ctime, cdata)
             n_cross   = len(crossings)
             t_period  = crossings[-1]-crossings[0] if n_cross>1 else 0
@@ -129,7 +128,7 @@ def main():
             this_length_E.append(Evalue)
             all_E.append(Evalue)
 
-            # Plotting
+            #Plotting
             for label, series, color in [("filtered", filt, "blue"), ("cropped", cdata, "red")]:
                 plt.figure(figsize=(8,4))
                 data_x = time if label=='filtered' else ctime
@@ -140,7 +139,7 @@ def main():
                 plt.ylabel("Quantisation level")
                 plt.tight_layout()
 
-                # Save
+                #Save
                 if graph_mode in ('save','both'):
                     plot_fn = out_dir / f"{L}mm_Trial{t}_{label}.png"
                     plt.savefig(plot_fn, dpi=300)
@@ -149,21 +148,21 @@ def main():
                     plt.show()
                 plt.close()
 
-            # Record results
+            #Record results
             ws.append([L, t, round(freq,2), round(Evalue,2)])
             print(f"✔️  {L}mm Trial {t}: f={freq:.2f}Hz, E={Evalue:.2f}GPa")
 
-        # Length average
+        #Length average
         if this_length_E:
             avg_E = sum(this_length_E)/len(this_length_E)
             ws.append([L, "avg", "", round(avg_E,2)])
 
-    # Overall average
+    #Overall average
     if all_E:
         overall = sum(all_E)/len(all_E)
         ws.append(["overall", "", "", round(overall,2)])
 
-    # Save Excel
+    #Save Excel
     if save_excel:
         excel_fn = out_dir / "beam_analysis.xlsx"
         wb.save(excel_fn)
